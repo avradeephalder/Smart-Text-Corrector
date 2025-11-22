@@ -1,0 +1,45 @@
+services:
+  api:
+    image: node:18-alpine
+    working_dir: /app/api
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./api:/app/api
+    environment:
+      - PORT=3000
+      - NLP_SERVICE_URL=http://nlp:8000
+      - OLLAMA_URL=http://ollama:11434
+      - CORRECTION_PROVIDER=nlp
+    command: sh -c "npm install && npm start"
+    depends_on:
+      - nlp
+    networks:
+      - autocorrect-net
+
+  nlp:
+    image: python:3.11-slim
+    working_dir: /app/nlp
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./nlp:/app/nlp
+    command: sh -c "pip install -r requirements.txt && python main.py"
+    networks:
+      - autocorrect-net
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - autocorrect-net
+
+networks:
+  autocorrect-net:
+    driver: bridge
+
+volumes:
+  ollama-data:
